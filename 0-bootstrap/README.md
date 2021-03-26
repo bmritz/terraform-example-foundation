@@ -59,6 +59,7 @@ The purpose of this step is to bootstrap a Google Cloud organization, creating a
 
 ## Prerequisites
 
+<<<<<<< HEAD
 To run the commands described in this document, you need to have the following
 installed:
 
@@ -161,6 +162,52 @@ the following steps:
    ```
    where `GCS_BUCKET_NAME` is the name of your bucket from the steps you ran
    earlier.
+=======
+1. A GCP [Organization](https://cloud.google.com/resource-manager/docs/creating-managing-organization)
+1. A GCP [Billing Account](https://cloud.google.com/billing/docs/how-to/manage-billing-account)
+1. Cloud Identity / G Suite groups for organization and billing admins
+1. Membership in the `group_org_admins` group for user running terraform
+1. Grant the roles mentioned in bootstrap [README.md](https://github.com/terraform-google-modules/terraform-google-bootstrap#permissions), as well as `roles/resourcemanager.folderCreator` for the user running the step.
+
+Further details of permissions required and resources created, can be found in the bootstrap module [documentation.](https://github.com/terraform-google-modules/terraform-google-bootstrap)
+
+**Note:** when running the examples in this repository, you may receive various errors when applying terraform:
+- `Error code 8, message: The project cannot be created because you have exceeded your allotted project quota.`. That means you have reached your [Project creation quota](https://support.google.com/cloud/answer/6330231). In this case you can use this [Request Project Quota Increase](https://support.google.com/code/contact/project_quota_increase) form to request a quota increase. The `terraform_sa_email` created in `0-bootstrap` should also be listed in "Email addresses that will be used to create projects" in that support form. If you face others quota errors, check the [Quota documentation](https://cloud.google.com/docs/quota) for guidence.
+- `Error: Error when reading or editing Organization Not Found : <organization-id>: googleapi: Error 403: The caller does not have permission, forbidden`.
+    - Check that your user have [Organization Admin](https://cloud.google.com/iam/docs/understanding-roles#resource-manager-roles) predefined role at the Organization level.
+    -  If this is the case, try the following:
+        ```
+        gcloud auth application-default login
+        gcloud auth list # <- confirm that correct account has a star next to it
+        ```
+    - Re-run `terraform` after.
+- `Error: Error setting billing account "XXXXXX-XXXXXX-XXXXXX" for project "projects/some-project": googleapi: Error 400: Precondition check failed., failedPrecondition`. Most likely this is related to billing quota issue.
+    - To confirm this, try `gcloud alpha billing projects link projects/some-project --billing-account XXXXXX-XXXXXX-XXXXXX`.
+    - If output states `Cloud billing quota exceeded`, please request increase via [https://support.google.com/code/contact/billing_quota_increase](https://support.google.com/code/contact/billing_quota_increase).
+
+## 0-bootstrap usage to deploy Jenkins
+
+If you are using the `jenkins_bootstrap` sub-module, please see [README-Jenkins](./README-Jenkins.md) for requirements and instructions on how to run the 0-bootstrap step. Using Jenkins requires a few manual steps, including configuring connectivity with your current Jenkins Master environment.
+
+## 0-bootstrap usage to deploy Cloud Build
+
+1. Change into 0-bootstrap folder
+1. Copy tfvars by running `cp terraform.example.tfvars terraform.tfvars` and update `terraform.tfvars` with values from your environment.
+1. Run `terraform init`
+1. Run `terraform plan` and review output
+1. Run `terraform apply`
+1. Run `terraform output gcs_bucket_tfstate` to get your GCS bucket from the apply step
+1. Copy the backend by running `cp backend.tf.example backend.tf` and update `backend.tf` with your GCS bucket.
+1. Re-run `terraform init` again, agree to copy state to GCS when prompted
+    1. (Optional) Run `terraform apply` to verify state is configured correctly
+
+### (Optional) State backends for running terraform locally
+
+Currently, the bucket information is replaced in the state backends as a part of the build process when executed by Cloud Build. If you would like to execute terraform locally, you will need to add your GCS bucket to the `backend.tf` files. You can update all of these files with the following steps:
+
+1. Change into the main directory for the terraform-example-foundation.
+1. Run this command on a mac: ```for i in `find ./ -name 'backend.tf'`; do sed -i '' -e  's/UPDATE_ME/cft-tfstate-e437/' $i; done``` where `GCS_BUCKET_NAME` is the name of your bucket from the steps executed above.
+>>>>>>> 3c656fa (update readmes)
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Inputs
